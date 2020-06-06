@@ -2,9 +2,9 @@ import pdb
 import numpy as np
 import sys
 import os 
+os.environ['CUDA_VISIBLE_DEVICES'] = '5'
 from keras.layers import Input, Conv2D, MaxPooling2D, UpSampling2D, ZeroPadding2D
 from keras.models import Model
-from keras.callbacks import TensorBoard
 sys.path.insert(1, "../")
 from load_data import oxford_images, oxford_labels, oxford_categories
 from PIL import Image
@@ -12,7 +12,6 @@ import pickle
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 # load and split data to training and validation datasets
-from tensorflow.keras.datasets import cifar100
 
 # create train and test 
 x_train, x_test, y_train, y_test = train_test_split(oxford_images, oxford_labels, test_size=0.2, stratify=oxford_labels, random_state=6)
@@ -74,12 +73,12 @@ def train_model():
     autoencoder.compile(optimizer='adam', loss='binary_crossentropy')
 
     autoencoder.fit(x_train_noisy, x_train_normalized,
-                    epochs=100,
-                    batch_size=32,
+                    epochs=80,
+                    batch_size=64,
                     shuffle=True,
                     validation_data=(x_test_noisy, x_test_normalized))
 
-    autoencoder.save('../../models/oxford/denoising_autoencoder_larger_100epochs.h5')
+    autoencoder.save('../../models/oxford/dae_80epochs.h5')
 
 train_model()
 

@@ -2,6 +2,8 @@ import pdb
 import sys 
 import numpy as np
 import matplotlib.pyplot as plt 
+import os
+os.environ['CUDA_VISIBLE_DEVICES'] = '4'
 from keras.applications.vgg16 import VGG16
 from keras.applications.vgg16 import preprocess_input
 from keras.models import Model
@@ -53,23 +55,16 @@ if __name__ == "__main__":
         else: # RGB image
             x_test_resized.append(np.array(Image.fromarray(tr).resize((224, 224), Image.ANTIALIAS)))
     x_test_resized = np.array(x_test_resized)
-
-    pdb.set_trace()
-    # min max normalize images
-    x_train_normalized = x_train_resized.astype('float32') / 255.
-    x_test_normalized = x_test_resized.astype('float32') / 255.
-    pdb.set_trace()
     
     x_train_preprocessed = preprocess_input(x_train_normalized)
     x_test_preprocessed = preprocess_input(x_test_normalized)
 
     x_train_features = model.model.predict(x_train_preprocessed)
     x_test_features = model.model.predict(x_test_preprocessed)
-    pdb.set_trace()
 
-    np.save("./oxford_train_features.npy", x_train_features)
-    np.save("./oxford_test_features.npy", x_test_features)
-    np.save("./oxford_train_labels.npy", y_train)
-    np.save("./oxford_test_labels.npy", y_test)
-    np.save("./oxford_train_images.npy", x_train)
-    np.save("./oxford_test_images.npy", x_test)
+    np.save("./oxford_vgg_train_features.npy", x_train_features)
+    np.save("./oxford_vgg_test_features.npy", x_test_features)
+    np.save("./oxford_vgg_train_labels.npy", y_train)
+    np.save("./oxford_vgg_test_labels.npy", y_test)
+    np.save("./oxford_vgg_train_images.npy", x_train)
+    np.save("./oxford_vgg_test_images.npy", x_test)

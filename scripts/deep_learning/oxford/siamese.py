@@ -4,6 +4,8 @@ import numpy as np
 import pdb
 import sys
 import random
+import os 
+os.environ['CUDA_VISIBLE_DEVICES'] = '4,5,6'
 from keras.datasets import cifar100
 from keras.models import Model
 from keras.layers import Input, Flatten, Dense, Dropout, Lambda, Conv2D, MaxPooling2D
@@ -23,29 +25,19 @@ def euclidean_distance(vects):
     sum_square = K.sum(K.square(x - y), axis=1, keepdims=True)
     return K.sqrt(K.maximum(sum_square, K.epsilon()))
 
-
 def eucl_dist_output_shape(shapes):
     shape1, shape2 = shapes
     return (shape1[0], 1)
 
-
 def contrastive_loss(y_true, y_pred):
-    '''Contrastive loss from Hadsell-et-al.'06
-    http://yann.lecun.com/exdb/publis/pdf/hadsell-chopra-lecun-06.pdf
-    '''
     margin = 1
     square_pred = K.square(y_pred)
     margin_square = K.square(K.maximum(margin - y_pred, 0))
     return K.mean(y_true * square_pred + (1 - y_true) * margin_square)
 
-
 def create_pairs(x, digit_indices):
-    '''Positive and negative pair creation.
-    Alternates between positive and negative pairs.
-    '''
     pairs = []
     labels = []
-    pdb.set_trace()
     temp = min([len(digit_indices[d]) for d in range(num_classes)]) - 1
     for d in range(num_classes):
         for i in range(temp):
@@ -60,75 +52,75 @@ def create_pairs(x, digit_indices):
 
 
 def create_base_network(input_shape):
-    '''Base network to be shared (eq. to feature extraction).
-    '''
     input = Input(shape=input_shape)
-    x = Conv2D(64, (3,3), activation="relu")(input)
-    x = Conv2D(32, (3,3), activation="relu")(x)
+    x = Conv2D(8, (4,4), activation="relu")(input)
+    x = Conv2D(8, (4,4), activation="relu")(x)
+    x = Conv2D(8, (4,4), activation="relu")(x)
     x = MaxPooling2D((2,2))(x)
-    x = Conv2D(32, (3,3), activation="relu")(x)
-    x = Conv2D(16, (3,3), activation="relu")(x)
+    x = Conv2D(32, (4,4), activation="relu")(x)
+    x = Conv2D(32, (4,4), activation="relu")(x)
+    x = Conv2D(32, (4,4), activation="relu")(x)
     x = MaxPooling2D((2,2))(x)
-    x = Conv2D(16, (3,3), activation="relu")(x)
-    x = Conv2D(8, (3,3), activation="relu")(x)
+    x = Conv2D(64, (4,4), activation="relu")(x)
+    x = Conv2D(128, (4,4), activation="relu")(x)
+    x = Conv2D(256, (4,4), activation="relu")(x)
     x = Flatten()(x)
-
-
     return Model(input, x)
 
-
 def compute_accuracy(y_true, y_pred):
-    '''Compute classification accuracy with a fixed threshold on distances.
-    '''
     pred = y_pred.ravel() < 0.5
     return np.mean(pred == y_true)
 
-
 def accuracy(y_true, y_pred):
-    '''Compute classification accuracy with a fixed threshold on distances.
-    '''
     return K.mean(K.equal(y_true, K.cast(y_pred < 0.5, y_true.dtype)))
 
+# # create train and test 
+# x_train, x_test, y_train, y_test = train_test_split(oxford_images, oxford_labels, test_size=0.2, stratify=oxford_labels, random_state=6)
 
-# create train and test 
-x_train, x_test, y_train, y_test = train_test_split(oxford_images, oxford_labels, test_size=0.2, stratify=oxford_labels, random_state=6)
+# # resize train dataset images to 224 x 224 x 3
+# x_train_resized = []
+# for tr in x_train:
+#     if len(tr.shape) == 2: # grayscale image
+#         temp = np.stack((tr,tr,tr), axis=2)
+#         x_train_resized.append(np.array(Image.fromarray(temp).resize((224, 224), Image.ANTIALIAS)))
+#     else: # RGB image
+#         x_train_resized.append(np.array(Image.fromarray(tr).resize((224, 224), Image.ANTIALIAS)))
+# x_train_resized = np.array(x_train_resized)
 
-# resize train dataset images to 224 x 224 x 3
-x_train_resized = []
-for tr in x_train:
-    if len(tr.shape) == 2: # grayscale image
-        temp = np.stack((tr,tr,tr), axis=2)
-        x_train_resized.append(np.array(Image.fromarray(temp).resize((224, 224), Image.ANTIALIAS)))
-    else: # RGB image
-        x_train_resized.append(np.array(Image.fromarray(tr).resize((224, 224), Image.ANTIALIAS)))
-x_train_resized = np.array(x_train_resized)
+# # resize test dataset images to 224 x 224 x 3
+# x_test_resized = []
+# for tr in x_test:
+#     if len(tr.shape) == 2: # grayscale image
+#         temp = np.stack((tr,tr,tr), axis=2)
+#         x_test_resized.append(np.array(Image.fromarray(temp).resize((224, 224), Image.ANTIALIAS)))
+#     else: # RGB image
+#         x_test_resized.append(np.array(Image.fromarray(tr).resize((224, 224), Image.ANTIALIAS)))
+# x_test_resized = np.array(x_test_resized)
 
-# resize test dataset images to 224 x 224 x 3
-x_test_resized = []
-for tr in x_test:
-    if len(tr.shape) == 2: # grayscale image
-        temp = np.stack((tr,tr,tr), axis=2)
-        x_test_resized.append(np.array(Image.fromarray(temp).resize((224, 224), Image.ANTIALIAS)))
-    else: # RGB image
-        x_test_resized.append(np.array(Image.fromarray(tr).resize((224, 224), Image.ANTIALIAS)))
-x_test_resized = np.array(x_test_resized)
+# y_train = np.array(y_train)
+# y_test = np.array(y_test)
+# np.save("./oxford_train_224.npy", x_train_resized)
+# np.save("./oxford_train_label.npy", y_train)
+# np.save("./oxford_test_224.npy", x_test_resized)
+# np.save("./oxford_test_label.npy", y_test)
+
+x_train_resized = np.load("./oxford_train_224.npy")
+y_train = np.load("./oxford_train_label.npy")
+x_test_resized = np.load("./oxford_test_224.npy")
+y_test = np.load("./oxford_test_label.npy")
+
+
 
 # min max normalize images
 x_train_normalized = x_train_resized.astype('float32') / 255.
 x_test_normalized = x_test_resized.astype('float32') / 255.
 input_shape = x_train_normalized.shape[1:]
 
-y_train = np.array(y_train)
-y_test = np.array(y_test)
-
-
-
 
 
 # create training+test positive and negative pairs
 class_indices = [np.where(y_train == i)[0] for i in range(num_classes)]
 temp = min([len(class_indices[d]) for d in range(num_classes)])
-pdb.set_trace()
 tr_pairs, tr_y = create_pairs(x_train_normalized, class_indices)
 
 class_indices = [np.where(y_test == i)[0] for i in range(num_classes)]
@@ -168,6 +160,6 @@ print('* Accuracy on training set: %0.2f%%' % (100 * tr_acc))
 print('* Accuracy on test set: %0.2f%%' % (100 * te_acc))
 
 
-model.save('../../models/oxford/siamese_more_complex_base_50epochs.h5')
+model.save('../../models/oxford/siamese_more_complex_50epochs.h5')
 
 pdb.set_trace()
